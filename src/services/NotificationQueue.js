@@ -218,19 +218,19 @@ export const getNotificationUserList = async (notification = {}) => {
 };
 
 // const MAX_BULLMQ_DELAY_MS = 2147483647; // ~24.8 days
-export const MAX_BULLMQ_DELAY_MS = 1728000000; // 20 days -> 20 days × 24 hours × 60 minutes × 60 seconds × 1000 ms
+export const MAX_BULLMQ_DELAY_MS = {ms: 1728000000, days: 20}; // 20 days -> 20 days × 24 hours × 60 minutes × 60 seconds × 1000 ms
 const POLLING_INTERVAL_MS = 10 * 60 * 1000; // every 10 minutes
 
 export const processFutureNotifications = async () => {
   try {
     const now = new Date();
-    const limitDate = new Date(Date.now() + MAX_BULLMQ_DELAY_MS);
+    const limitDate = new Date(Date.now() + MAX_BULLMQ_DELAY_MS.ms);
 
     const notificationsToSchedule = await Notification.find({
       status: "Pending",
       scheduleAt: { $lte: limitDate },
     });
-
+    console.log(`Found ${notificationsToSchedule.length} notifications to schedule.`);
     await Promise.all(
       notificationsToSchedule.map(async (entry) => {
         const delay = new Date(entry.scheduleAt).getTime() - Date.now();

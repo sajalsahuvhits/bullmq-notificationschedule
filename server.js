@@ -6,6 +6,7 @@ import { dbConnection } from "./src/config/Db.config.js";
 
 import cron from 'node-cron';
 import { processFutureNotifications } from "./src/services/NotificationQueue.js";
+import { addEditNotification } from "./src/controller/NotificationController.js";
 const app = express();
 const port = process.env.PORT;
 startNotificationWorker();
@@ -31,6 +32,7 @@ app.get("/api", (req, res) => {
 app.post("/api/schedule-email", emailSchedule);
 app.post("/api/cancel-schedule-email", cancelNotification);
 
+app.post("/api/add-edit-notification", addEditNotification);
 
 cron.schedule('*/10 * * * *', async () => {
   console.log('⏱ Running future notification scheduler...');

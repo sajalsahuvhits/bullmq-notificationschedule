@@ -30,9 +30,9 @@
 
 import { Worker } from 'bullmq';
 import RedisConnection from '../config/Redis.config.js';
-import { sendNotification } from '../services/NotificationQueueService.js';
+import { sendNotification } from '../services/NotificationQueue.js';
 import Redis from 'ioredis';
-import { Notification } from '../Index.js';
+import Notification from '../model/Notification.js';
 
 const redis = RedisConnection;
 const startNotificationWorker = () => {

@@ -2,19 +2,15 @@ import MomentTimezone from "moment-timezone";
 import {
   addNotificationInQueue,
   cancelScheduledJob,
+  MAX_BULLMQ_DELAY_MS,
 } from "../services/NotificationQueue.js";
 import { isMoreThanGivenDaysFromNow } from "../utils/CommonFunctions.js";
+import Notification from "../model/Notification.js";
 
 export const addEditNotification = async (req, res) => {
   try {
-    let {
-      id,
-      title,
-      deliveryChannels,
-      scheduleAt,
-      description,
-      link,
-    } = req.body;
+    let { id, title, deliveryChannels, scheduleAt, description, link } =
+      req.body;
 
     // Parse deliveryChannels if it’s a string (from URLSearchParams)
     if (typeof deliveryChannels === "string") {
@@ -36,14 +32,11 @@ export const addEditNotification = async (req, res) => {
     }
 
     // Validate deliveryChannels
-    // if (!deliveryChannels || Object.values(deliveryChannels).every((v) => !v)) {
-    //   return sendResponse(
-    //     res,
-    //     StatusCodes.BAD_REQUEST,
-    //     ResponseMessage.AT_LEAST_ONE_CHANNEL,
-    //     []
-    //   );
-    // }
+    if (!deliveryChannels || !deliveryChannels?.length) {
+      return res.status(400).send({
+        message: "At least one delicery channel required",
+      });
+    }
     const sendDateTime = MomentTimezone.tz(
       scheduleAt,
       "YYYY-MM-DD HH:mm",
@@ -63,19 +56,30 @@ export const addEditNotification = async (req, res) => {
         message: "Schedule time must be in the future",
       });
     }
-    
+    let notificationChannel = {
+      email: deliveryChannels.includes("email"),
+      mobilePush: deliveryChannels.includes("mobilePush"),
+      whatsapp: deliveryChannels.includes("whatsapp"),
+      web: deliveryChannels.includes("web"),
+    }
     const updatedData = {
       title,
-      deliveryChannels,
+      deliveryChannels: notificationChannel,
       scheduleAt,
       description,
       link,
     };
-    let isLongFutureDate = isMoreThanGivenDaysFromNow(scheduleAt, 20);
-    if(isLongFutureDate){
-      updatedData.status = "Pending"
+    let isLongFutureDate = isMoreThanGivenDaysFromNow(
+      scheduleAt,
+      MAX_BULLMQ_DELAY_MS.days
+    );
+    if (isLongFutureDate) {
+      updatedData.status = "Pending";
+    }else{
+      updatedData.status = "Scheduled";
     }
-
+    
+    console.log(updatedData)
     if (id) {
       const existingNotification = await Notification.findById(id);
       if (!existingNotification || existingNotification.isDelete) {
@@ -96,7 +100,9 @@ export const addEditNotification = async (req, res) => {
           new: true,
         }
       );
-      await addNotificationInQueue(id, delay);
+      if(!isLongFutureDate){
+        await addNotificationInQueue(id, delay);
+      }
       return res.status(200).send({
         message: "Notification updated successfully.",
       });
