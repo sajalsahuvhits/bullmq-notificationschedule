@@ -74,9 +74,9 @@ export const addEditNotification = async (req, res) => {
       MAX_BULLMQ_DELAY_MS.days
     );
     if (isLongFutureDate) {
-      updatedData.status = "Pending";
+      updatedData.addedToQueue = false;
     }else{
-      updatedData.status = "Scheduled";
+      updatedData.addedToQueue = true;
     }
     
     console.log(updatedData)

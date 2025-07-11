@@ -227,7 +227,7 @@ export const processFutureNotifications = async () => {
     const limitDate = new Date(Date.now() + MAX_BULLMQ_DELAY_MS.ms);
 
     const notificationsToSchedule = await Notification.find({
-      status: "Pending",
+      addedToQueue: false,
       scheduleAt: { $lte: limitDate },
     });
     console.log(`Found ${notificationsToSchedule.length} notifications to schedule.`);
@@ -237,7 +237,7 @@ export const processFutureNotifications = async () => {
 
         await addNotificationInQueue(entry.notificationId.toString(), delay);
 
-        entry.status = "Scheduled";
+        entry.addedToQueue = true;
         await entry.save();
 
         console.log(`Queued ${entry.notificationId} to BullMQ with delay ${delay}ms`);

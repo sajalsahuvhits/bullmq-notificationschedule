@@ -23,8 +23,12 @@ const notificationSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["Pending", "Scheduled", "Sent"],
+      enum: ["Scheduled", "Sent"],
       default: "Scheduled",
+    },
+    addedToQueue: {
+      type: Boolean,
+      default: true,
     },
     isDelete: {
       type: Boolean,
